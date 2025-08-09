@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use clap::{Parser};
+use clap::Parser;
 
 #[derive(Parser, Debug)]
 #[command(name = "spider")]
@@ -15,7 +15,7 @@ pub struct Cli {
     #[arg(short, long, default_value = "./data")]
     path: Box<Path>,
 
-    url: String
+    pub url: String,
 }
 
 impl Cli {
@@ -31,10 +31,13 @@ impl Cli {
 fn check_path(path: &Path) -> Result<(), String> {
     match path {
         p if !p.exists() => Err(format!("The path {} does not exist.", p.display())),
-        p if !p.is_dir() => Err(format!("The path {} is not a valid directory.", p.display())),
-        p if p.metadata().is_err() || p.metadata().unwrap().permissions().readonly() => {
-            Err(format!("The path {} does not have write permissions.", p.display()))
-        }
+        p if !p.is_dir() => Err(format!(
+            "The path {} is not a valid directory.",
+            p.display()
+        )),
+        p if p.metadata().is_err() || p.metadata().unwrap().permissions().readonly() => Err(
+            format!("The path {} does not have write permissions.", p.display()),
+        ),
         _ => Ok(()),
     }
 }
