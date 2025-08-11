@@ -1,5 +1,7 @@
 use chrono::Local;
+use dashmap::DashSet;
 use std::path::Path;
+use std::sync::Arc;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 use uuid::Uuid;
@@ -38,11 +40,20 @@ fn generate_filename(content_type: &str) -> Option<String> {
     ))
 }
 
-pub async fn download_images(image_urls: Vec<String>, download_path: &Path) -> Result<(), String> {
+pub async fn download_images(
+    image_urls: Vec<String>,
+    download_path: &Path,
+    downloaded: Arc<DashSet<String>>,
+) -> Result<(), String> {
     for url in image_urls {
+        if downloaded.contains(&url) {
+            continue;
+        }
         let response = reqwest::get(&url)
             .await
             .map_err(|e| format!("Failed to download image from {url}: {e}"))?;
+
+        downloaded.insert(url.clone());
 
         let content_type = response
             .headers()
@@ -53,9 +64,6 @@ pub async fn download_images(image_urls: Vec<String>, download_path: &Path) -> R
         let filename = generate_filename(content_type);
 
         if filename.is_none() {
-            eprintln!(
-                "Skipping download for {url} due to unsupported content type: {content_type}"
-            );
             continue;
         }
 
@@ -69,6 +77,8 @@ pub async fn download_images(image_urls: Vec<String>, download_path: &Path) -> R
         file.write_all(&bytes)
             .await
             .map_err(|e| format!("Failed to write image to file: {e}"))?;
+
+        println!("Downloaded image from {url}");
     }
     Ok(())
 }

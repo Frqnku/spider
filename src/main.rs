@@ -5,6 +5,7 @@ mod rebuild_url;
 mod scrape;
 use std::{collections::HashSet, sync::Arc};
 
+use dashmap::DashSet;
 use parse_args::Cli;
 use tokio::sync::{Mutex, Semaphore};
 
@@ -19,16 +20,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         std::process::exit(1);
     }
 
-    let semaphore = Arc::new(Semaphore::new(10)); // Limite 10 tâches simultanées
+    let semaphore = Arc::new(Semaphore::new(10));
     let visited = Arc::new(Mutex::new(HashSet::new()));
+    let downloaded = Arc::new(DashSet::new());
 
     scrape_and_download(
         cli.url,
         cli.path,
         cli.recursive,
-        cli.limit + 1,
+        cli.limit,
         semaphore,
         visited,
+        downloaded
     )
     .await?;
 
