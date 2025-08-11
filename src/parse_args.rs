@@ -7,13 +7,13 @@ use clap::Parser;
 #[command(about = "A Rust image scraper", long_about = None)]
 pub struct Cli {
     #[arg(short, long)]
-    recursive: bool,
+    pub recursive: bool,
 
     #[arg(short, long, requires = "recursive", default_value_t = 5)]
-    limit: u32,
+    pub limit: u32,
 
     #[arg(short, long, default_value = "./data")]
-    path: Box<Path>,
+    pub path: Box<Path>,
 
     pub url: String,
 }
