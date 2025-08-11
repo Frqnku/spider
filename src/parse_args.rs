@@ -1,6 +1,5 @@
-use std::path::Path;
-
 use clap::Parser;
+use std::path::Path;
 
 #[derive(Parser, Debug)]
 #[command(name = "spider")]
