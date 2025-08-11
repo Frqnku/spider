@@ -1,6 +1,7 @@
+mod download;
 mod parse_args;
-mod scraper;
 mod rebuild_url;
+mod scraper;
 use parse_args::Cli;
 
 #[tokio::main]
@@ -22,8 +23,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let image_urls: Vec<String> = scraper::extract_image_urls(&cli.url, &response)
         .map_err(|e| format!("Failed to extract image URLs: {e}"))?;
 
-    for url in image_urls {
-        println!("Found image URL: {url}");
+    if let Err(e) = download::download_images(image_urls, &cli.path).await {
+        eprintln!("Error downloading images: {e}");
+        std::process::exit(1);
     }
 
     let deeper_urls: Vec<String> = scraper::extract_deeper_urls(&cli.url, &response)
