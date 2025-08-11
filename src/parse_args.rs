@@ -1,5 +1,16 @@
 use clap::Parser;
-use std::path::{PathBuf};
+use std::path::PathBuf;
+
+fn positive_usize(s: &str) -> Result<usize, String> {
+    let value = s
+        .parse::<usize>()
+        .map_err(|_| format!("`{s}` is not a valid positive integer"))?;
+    if value == 0 {
+        Err(String::from("Value must be greater than 0"))
+    } else {
+        Ok(value)
+    }
+}
 
 #[derive(Parser, Debug)]
 #[command(name = "spider")]
@@ -8,7 +19,7 @@ pub struct Cli {
     #[arg(short, long)]
     pub recursive: bool,
 
-    #[arg(short, long, requires = "recursive", default_value_t = 5)]
+    #[arg(short, long, requires = "recursive", default_value_t = 5, value_parser = positive_usize)]
     pub limit: usize,
 
     #[arg(short, long, default_value = "./data")]
