@@ -5,6 +5,7 @@ use std::sync::Arc;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 use uuid::Uuid;
+use futures_util::StreamExt;
 
 fn generate_filename(content_type: &str) -> Option<String> {
     let content_type_lower = content_type.to_lowercase();
@@ -49,6 +50,7 @@ pub async fn download_images(
         if downloaded.contains(&url) {
             continue;
         }
+
         let response = reqwest::get(&url)
             .await
             .map_err(|e| format!("Failed to download image from {url}: {e}"))?;
@@ -61,22 +63,24 @@ pub async fn download_images(
             .and_then(|v| v.to_str().ok())
             .unwrap_or("application/octet-stream");
 
-        let filename = generate_filename(content_type);
+        let filename = match generate_filename(content_type) {
+            Some(name) => name,
+            None => continue,
+        };
 
-        if filename.is_none() {
-            continue;
-        }
-
-        let mut file = File::create(download_path.join(filename.unwrap()))
+        let file_path = download_path.join(filename);
+        let mut file = File::create(&file_path)
             .await
             .map_err(|e| format!("Failed to create file for {url}: {e}"))?;
-        let bytes = response
-            .bytes()
-            .await
-            .map_err(|e| format!("Failed to read response bytes: {e}"))?;
-        file.write_all(&bytes)
-            .await
-            .map_err(|e| format!("Failed to write image to file: {e}"))?;
+
+        let mut stream = response.bytes_stream();
+
+        while let Some(chunk) = stream.next().await {
+            let data = chunk.map_err(|e| format!("Failed to read chunk from {url}: {e}"))?;
+            file.write_all(&data)
+                .await
+                .map_err(|e| format!("Failed to write chunk to file for {url}: {e}"))?;
+        }
 
         println!("Downloaded image from {url}");
     }
