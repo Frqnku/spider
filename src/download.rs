@@ -4,7 +4,7 @@ use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 use uuid::Uuid;
 
-fn generate_filename(content_type: &str) -> String {
+fn generate_filename(content_type: &str) -> Option<String> {
     let content_type_lower = content_type.to_lowercase();
     let normalized_type = match content_type_lower.as_str() {
         "image/jfif" | "image/pjpeg" => "image/jpeg",
@@ -12,18 +12,23 @@ fn generate_filename(content_type: &str) -> String {
     };
 
     let correct_ext = match normalized_type {
+        "image/jpeg" => "jpg",
         "image/png" => "png",
         "image/webp" => "webp",
         "image/gif" => "gif",
         "image/bmp" => "bmp",
-        _ => "jpg",
+        _ => "bin",
     };
 
-    format!(
+    if correct_ext == "bin" {
+        return None;
+    }
+
+    Some(format!(
         "{}_{}.{correct_ext}",
         Local::now().format("%Y-%m-%d-%H%M%S"),
         Uuid::new_v4()
-    )
+    ))
 }
 
 pub async fn download_images(image_urls: Vec<String>, download_path: &Path) -> Result<(), String> {
@@ -40,9 +45,14 @@ pub async fn download_images(image_urls: Vec<String>, download_path: &Path) -> R
 
         let filename = generate_filename(content_type);
 
-        dbg!(&filename);
+        if filename.is_none() {
+            eprintln!(
+                "Skipping download for {url} due to unsupported content type: {content_type}"
+            );
+            continue;
+        }
 
-        let mut file = File::create(download_path.join(filename))
+        let mut file = File::create(download_path.join(filename.unwrap()))
             .await
             .map_err(|e| format!("Failed to create file for {url}: {e}"))?;
         let bytes = response
