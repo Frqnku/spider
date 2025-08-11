@@ -1,5 +1,5 @@
 use clap::Parser;
-use std::path::Path;
+use std::path::{PathBuf};
 
 #[derive(Parser, Debug)]
 #[command(name = "spider")]
@@ -9,10 +9,10 @@ pub struct Cli {
     pub recursive: bool,
 
     #[arg(short, long, requires = "recursive", default_value_t = 5)]
-    pub limit: u32,
+    pub limit: usize,
 
     #[arg(short, long, default_value = "./data")]
-    pub path: Box<Path>,
+    pub path: PathBuf,
 
     pub url: String,
 }
@@ -27,7 +27,7 @@ impl Cli {
     }
 }
 
-fn check_path(path: &Path) -> Result<(), String> {
+fn check_path(path: &PathBuf) -> Result<(), String> {
     match path {
         p if !p.exists() => Err(format!("The path {} does not exist.", p.display())),
         p if !p.is_dir() => Err(format!(
