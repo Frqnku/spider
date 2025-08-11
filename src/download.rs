@@ -12,11 +12,18 @@ fn generate_filename(content_type: &str) -> Option<String> {
     };
 
     let correct_ext = match normalized_type {
-        "image/jpeg" => "jpg",
+        "image/jpeg" | "image/jpg" => "jpg",
         "image/png" => "png",
         "image/webp" => "webp",
         "image/gif" => "gif",
         "image/bmp" => "bmp",
+        "image/svg+xml" | "image/svg" => "svg",
+        "image/tiff" | "image/tif" => "tiff",
+        "image/x-icon" | "image/vnd.microsoft.icon" => "ico",
+        "image/heif" | "image/heic" => "heif",
+        "image/avif" => "avif",
+        "image/jp2" => "jp2",
+        "image/x-png" => "png",
         _ => "bin",
     };
 
