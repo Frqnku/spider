@@ -1,5 +1,6 @@
 use std::{collections::HashSet, path::PathBuf, sync::Arc};
 
+use dashmap::DashSet;
 use futures::future::{BoxFuture, FutureExt};
 use tokio::sync::{Mutex, Semaphore};
 
@@ -12,6 +13,7 @@ pub fn scrape_and_download(
     limit: usize,
     semaphore: Arc<Semaphore>,
     visited: Arc<Mutex<HashSet<String>>>,
+    downloaded: Arc<DashSet<String>>,
 ) -> BoxFuture<'static, Result<(), String>> {
     async move {
         {
@@ -36,9 +38,11 @@ pub fn scrape_and_download(
             .map_err(|e| format!("Failed to read response text for {}: {}", &url, e))?;
 
         let image_urls = extract_url::extract_image_urls(&url, &response)?;
-        download::download_images(image_urls, download_path.as_ref()).await?;
+        download::download_images(image_urls, download_path.as_ref(), downloaded.clone()).await?;
 
-        if recursive {
+        drop(_permit);
+
+        if recursive && limit > 1 {
             let deeper_urls = extract_url::extract_deeper_urls(&url, &response)?;
 
             let mut handles = Vec::new();
@@ -48,7 +52,7 @@ pub fn scrape_and_download(
                 let semaphore_clone = semaphore.clone();
                 let visited_clone = visited.clone();
                 let limit_clone = limit - 1;
-                dbg!(&deeper_url);
+                let downloaded_clone = downloaded.clone();
 
                 let fut = scrape_and_download(
                     deeper_url,
@@ -57,6 +61,7 @@ pub fn scrape_and_download(
                     limit_clone,
                     semaphore_clone,
                     visited_clone,
+                    downloaded_clone,
                 );
 
                 let handle = tokio::spawn(fut);
