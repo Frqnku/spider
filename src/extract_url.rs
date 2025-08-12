@@ -1,3 +1,5 @@
+use url::Url;
+
 use crate::rebuild_url::rebuild_url;
 
 fn find_image_tags(html: &str) -> Vec<usize> {
@@ -43,13 +45,27 @@ fn find_a_href_tags(html: &str) -> Vec<usize> {
 }
 
 pub fn extract_deeper_urls(url: &str, html: &str) -> Result<Vec<String>, String> {
+    let base = Url::parse(url).map_err(|e| e.to_string())?;
+
     let a_href_urls = find_a_href_tags(html)
         .into_iter()
         .filter_map(|index| {
             let href_start = html[index..].find("href=\"")? + index + 6;
             let href_end = html[href_start..].find("\"")? + href_start;
-            let url = rebuild_url(url, &html[href_start..href_end]);
-            Some(url)
+            let raw_href = &html[href_start..href_end];
+
+            let abs_url = rebuild_url(url, raw_href);
+
+            if let Ok(parsed) = Url::parse(&abs_url) {
+                if parsed.domain() == base.domain()
+                    && parsed.path() != "/"
+                {
+                    dbg!(&abs_url);
+                    return Some(abs_url);
+                }
+            }
+
+            None
         })
         .collect();
 
