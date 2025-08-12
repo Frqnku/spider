@@ -18,10 +18,9 @@ pub fn scrape_and_download(
     async move {
         {
             let mut visited_lock = visited.lock().await;
-            if visited_lock.contains(&url) {
+            if !visited_lock.insert(url.clone()) {
                 return Ok(());
             }
-            visited_lock.insert(url.clone());
         }
 
         if limit == 0 {
