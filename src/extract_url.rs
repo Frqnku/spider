@@ -57,10 +57,7 @@ pub fn extract_deeper_urls(url: &str, html: &str) -> Result<Vec<String>, String>
             let abs_url = rebuild_url(url, raw_href);
 
             if let Ok(parsed) = Url::parse(&abs_url) {
-                if parsed.domain() == base.domain()
-                    && parsed.path() != "/"
-                {
-                    dbg!(&abs_url);
+                if parsed.domain() == base.domain() && parsed.path() != "/" {
                     return Some(abs_url);
                 }
             }

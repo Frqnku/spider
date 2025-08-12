@@ -31,7 +31,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         cli.limit,
         semaphore,
         visited,
-        downloaded
+        downloaded,
     )
     .await?;
 
