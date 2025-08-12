@@ -2,7 +2,6 @@
 
 [![Crates.io](https://img.shields.io/crates/v/spider.svg)](https://crates.io/crates/spider)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Build Status](https://github.com/Frqnku/spider/actions/workflows/rust.yml/badge.svg)](https://github.com/Frqnku/spider/actions)
 [![Rust](https://img.shields.io/badge/Rust-2021-orange.svg)](https://www.rust-lang.org/)
 
 An **ultra-fast image scraper** built in **Rust**, leveraging **asynchronous programming** and **multi-threading** for unmatched performance.  
